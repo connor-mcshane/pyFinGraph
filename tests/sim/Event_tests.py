@@ -17,8 +17,8 @@ class Event_tests(unittest.TestCase):
         checked
         """
 
-        a = Event()
-        b = Event()
+        a = Event(1)
+        b = Event(2)
 
         with self.assertRaises(TypeError):
             a.nextEvent = 2

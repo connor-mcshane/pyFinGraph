@@ -6,10 +6,11 @@ from datetime import datetime
 
 class Event(object):
 
-	def __init__(self, *args):
-		self._elements = list()
+	def __init__(self, idx, *args):
+		self._queue = [[], [], []]
 		self.args = args
 
+		self._index = idx
 		self._nextEvent = None
 
 	@property
@@ -23,18 +24,20 @@ class Event(object):
 		else:
 			self._nextEvent = value
 
-	def subscribe(self, element):
-		self._elements.append(element)
+	def subscribe(self, element, priority):
+		self._queue[priority].append(element)
 
 	def __call__(self, *args):
 		runtime_args = self.args + args
-		for ele in self._elements:
-			ele.apply(*runtime_args)
+
+		for priority in self._queue:
+			for e in priority:
+				e.apply(*runtime_args)
 
 class TimeEvent(Event):
 
 	def __init__(self, Timestamp, *args, **kwargs):
-		super().__init__(*args, **kwargs)
+		super().__init__(Timestamp, *args, **kwargs)
 
 		if isinstance(Timestamp, datetime):
 			self._index = Timestamp

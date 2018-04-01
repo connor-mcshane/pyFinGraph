@@ -3,12 +3,16 @@ The Elements. Elements are the smallest units in a model
 """
 
 from abc import ABC, abstractmethod
+import logging
 
 class Element(ABC):
 
     @abstractmethod
     def apply(self):
         pass
+
+    def subscribe_to(self, event, priority):
+        event.subscribe(self, priority)
 
 class Node(Element):
     """ Nodes are any elements that can either generate/consume
@@ -19,23 +23,58 @@ class Node(Element):
 
         self.name = name
         self._val = float(init_val)
-        self._stage = 0
-        self._can_hold = can_hold
+        self._can_hold = bool(can_hold)
 
-    def stage(self, value):
-        self._stage += value
+        self._events = []
+        self._stage = 0
+        self._propotion = 1
+
+    def stage(self, value, proportion=0):
+
+        if proportion:
+            if self._can_hold:
+                abs_val = self._val * (proportion/self._propotion)
+            else:
+                abs_val = self._stage * (proportion/self._propotion)
+            self._propotion += proportion
+            self._stage += abs_val
+            return (-1.0)*abs_val
+        else:
+            self._stage += value
+            return (-1.0)*value
+
+        logging.info("Node={};staged={:.2f};proportion={:.2f}".format(self.name, value, proportion))
+
+    def subscribe_to(self, event):
+        """ Elements that cannot hold value need to apply staging at the end
+        of an event
+        """
+
+        if event in self._events:
+            return
+
+        if self._can_hold:
+            event.subscribe(self, 1)
+        else:
+            event.subscribe(self, 2)
+
+        self._events.append(event._index)
 
     def apply(self, *args):
+
         if self._stage == 0:
             return
         else:
-
             if (self._can_hold):
                 self._val += self._stage
-                print("{}:\tSTAGED={:.2f}\tEND={:.2f}".format(self.name, self._stage, self._val))#TEST
+                logging.info("Node={};applied={:.2f};value={:.2f}".format(self.name,
+                                                                          self._stage,
+                                                                          self._val))
             else:
-                print("Element cannot hold value, {:.2f} lost from model".format(self._stage))
+                logging.warning("Node={};lost={:.2f}".format(self.name,self._stage))
 
+            # Reset staging parameters
+            self._propotion = 1
             self._stage = 0
 
 class Modifier(Element):
@@ -45,29 +84,25 @@ class Modifier(Element):
 
     def __init__(self, src, dst, val, method='add'):
 
-        if src is None:
-            self._src = solver.input
-        else:
-            self._src = src
-
-        if dst is None:
-            self._dst = solver.output
-        else:
-            self._dst = dst
-
-        self._name = "{} to {}".format(self._src.name, self._dst.name)
-
+        self._src = src
+        self._dst = dst
+        self.name = "{} to {}".format(self._src.name, self._dst.name)
         self._val = val
-
         self._method = method
+
+    def subscribe_to(self, event):
+
+        super().subscribe_to(event, 0)
+        self._src.subscribe_to(event)
+        self._dst.subscribe_to(event)
 
     def apply(self, *args):
 
         if self._method == 'add':
-            self._src.stage(-self._val)
-            self._dst.stage(self._val)
+            ret = self._src.stage(-self._val)
+            self._dst.stage(ret)
 
         elif self._method == 'proportion':
-            add_val = self._val * self._src._val
-            self._dst.stage(add_val)
-            self._src.stage(-add_val)
+
+            ret = self._src.stage(None, -self._val)
+            self._dst.stage(ret)
