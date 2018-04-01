@@ -1,6 +1,7 @@
 import unittest
+from datetime import datetime
 
-from pyFinGraph.sim.Event import Event
+from pyFinGraph.sim.Event import Event, TimeEvent
 
 def main():
     unittest.main()
@@ -21,6 +22,23 @@ class Event_tests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             a.nextEvent = 2
+
+    def test_TimeEvent_InitInputValidation_Nop(self):
+
+        with self.assertRaises(TypeError):
+            a = TimeEvent(2)
+            
+        b = TimeEvent(datetime(2012,1,1))
+
+    def test_TimeEvent_Ordering_Op(self):
+
+        a = TimeEvent(datetime(2012,1,1))
+        b = TimeEvent(datetime(2013,1,1))
+        l = [b, a]
+
+        l.sort(key=lambda x: x._index)
+
+        self.assertTrue(l[0] == a)
 
 if __name__ == '__main__':
     main()
