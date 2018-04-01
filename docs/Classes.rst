@@ -21,4 +21,4 @@ Elements
 
 Elements are those which handle value; they can either store value (holding nodes), 
 generate/consume value (Non-holding nodes), or modify value (Modifiers) - either by
-transferring value from node to node, or by adjusting value
+transferring value from node to node, or by adjusting
