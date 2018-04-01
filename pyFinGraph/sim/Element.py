@@ -11,8 +11,9 @@ class Element(ABC):
     def apply(self):
         pass
 
-    def subscribe_to(self, event, priority):
-        event.subscribe(self, priority)
+    @abstractmethod
+    def subscribe_to(self, event):
+        pass
 
 class Node(Element):
     """ Nodes are any elements that can either generate/consume
@@ -25,11 +26,12 @@ class Node(Element):
         self._val = float(init_val)
         self._can_hold = bool(can_hold)
 
-        self._events = []
         self._stage = 0
         self._propotion = 1
 
     def stage(self, value, proportion=0):
+
+        logging.info("Node={};staged={:.2f};proportion={:.2f}".format(self.name, value, proportion))
 
         if proportion:
             if self._can_hold:
@@ -43,24 +45,19 @@ class Node(Element):
             self._stage += value
             return (-1.0)*value
 
-        logging.info("Node={};staged={:.2f};proportion={:.2f}".format(self.name, value, proportion))
-
     def subscribe_to(self, event):
         """ Elements that cannot hold value need to apply staging at the end
         of an event
         """
-
-        if event in self._events:
-            return
 
         if self._can_hold:
             event.subscribe(self, 1)
         else:
             event.subscribe(self, 2)
 
-        self._events.append(event._index)
-
     def apply(self, *args):
+
+        self._propotion = 1
 
         if self._stage == 0:
             return
@@ -74,7 +71,6 @@ class Node(Element):
                 logging.warning("Node={};lost={:.2f}".format(self.name,self._stage))
 
             # Reset staging parameters
-            self._propotion = 1
             self._stage = 0
 
 class Modifier(Element):
@@ -86,15 +82,17 @@ class Modifier(Element):
 
         self._src = src
         self._dst = dst
-        self.name = "{} to {}".format(self._src.name, self._dst.name)
         self._val = val
         self._method = method
 
-    def subscribe_to(self, event):
+        self.name = "{} to {}".format(self._src.name, self._dst.name)
 
-        super().subscribe_to(event, 0)
-        self._src.subscribe_to(event)
-        self._dst.subscribe_to(event)
+    def subscribe_to(self, *args):
+
+        for e in args:
+            e.subscribe(self, 0)
+            self._src.subscribe_to(e)
+            self._dst.subscribe_to(e)
 
     def apply(self, *args):
 
@@ -104,5 +102,5 @@ class Modifier(Element):
 
         elif self._method == 'proportion':
 
-            ret = self._src.stage(None, -self._val)
+            ret = self._src.stage(0, -self._val)
             self._dst.stage(ret)

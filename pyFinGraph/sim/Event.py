@@ -6,9 +6,8 @@ from datetime import datetime
 
 class Event(object):
 
-	def __init__(self, idx, *args):
+	def __init__(self, idx):
 		self._queue = [[], [], []]
-		self.args = args
 
 		self._index = idx
 		self._nextEvent = None
@@ -19,7 +18,7 @@ class Event(object):
 
 	@nextEvent.setter
 	def nextEvent(self, value):
-		if not(isinstance(value, self)):
+		if not(isinstance(value, Event)):
 			raise TypeError("Next event must be the same type")
 		else:
 			self._nextEvent = value
@@ -28,11 +27,13 @@ class Event(object):
 		self._queue[priority].append(element)
 
 	def __call__(self, *args):
-		runtime_args = self.args + args
+		runtime_args = args
 
 		for priority in self._queue:
 			for e in priority:
 				e.apply(*runtime_args)
+		
+		return self._nextEvent
 
 class TimeEvent(Event):
 
