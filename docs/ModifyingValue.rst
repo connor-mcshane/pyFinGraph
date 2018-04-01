@@ -33,7 +33,11 @@ this only transfers 250 (0.50 * 500) - which is not what we want.
 
 To prevent this, we introduce staging. Staging ensures that the value of an element
 is not modified until the end of a discrete time step (or event). I.e., we attempt
-to make atomic operations on the value of elements
+to make atomic operations on the value of elements.
+
+Each element has a ``staging`` attribute, which temporarily stores value. This value
+is the only value that should be within one discrete time step (event), and at the
+end of the event, the staging value is *applied* to the element's actual value.
 
 Another example, similar to before, we have one node that has value, and we want to
 equally distribute its net holding to two other nodes. Notice we introduce the superscript
