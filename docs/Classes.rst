@@ -22,3 +22,9 @@ Elements
 Elements are those which handle value; they can either store value (holding nodes), 
 generate/consume value (Non-holding nodes), or modify value (Modifiers) - either by
 transferring value from node to node, or by adjusting
+
+Events
+======
+
+Events represent the smallest discrete step into a simulation. Modifications to value
+within one event are considered atomic (I hope).
