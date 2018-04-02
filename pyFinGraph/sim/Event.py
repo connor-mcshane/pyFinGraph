@@ -2,7 +2,7 @@
 These are the discerte steps taken in the simulation
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class Event(object):
 
@@ -37,10 +37,34 @@ class Event(object):
 
 class TimeEvent(Event):
 
-	def __init__(self, Timestamp, *args, **kwargs):
-		super().__init__(Timestamp, *args, **kwargs)
+	def __init__(self, Timestamp):
+		super().__init__(Timestamp)
 
 		if isinstance(Timestamp, datetime):
 			self._index = Timestamp
 		else:
 			raise TypeError("Timesteps require datetime objects")
+
+class Sweep(object):
+	""" A sweep is one event repeated over several iterations
+	"""
+
+	def __init__(self, event):
+		self._base_event = event
+		self._cur = 0
+		self._indexes = []
+
+	def next(self):
+
+		self._cur += 1
+
+		if self._cur >= len(self._indexes):
+			return None
+		else:
+			return self._indexes[self._cur]
+
+	def __call__(self, *args):
+		runtime_args = args
+		self._base_event(*runtime_args)
+
+		return self.next()

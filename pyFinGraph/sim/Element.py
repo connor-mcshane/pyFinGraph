@@ -29,6 +29,14 @@ class Node(Element):
         self._stage = 0
         self._propotion = 1
 
+    @property
+    def val(self):
+
+        if self._can_hold:
+            return self._val
+        else:
+            return self._stage
+
     def stage(self, value, proportion=0):
 
         logging.info("Node={};staged={:.2f};proportion={:.2f}".format(self.name, value, proportion))
